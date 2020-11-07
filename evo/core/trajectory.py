@@ -436,7 +436,7 @@ def se3_poses_to_xyz_quat_wxyz(
     return xyz, quat_wxyz
 
 
-def merge(trajectories: typing.Sequence[PoseTrajectory3D]) -> PoseTrajectory3D:
+def merge(trajectories: typing.Iterable[PoseTrajectory3D]) -> PoseTrajectory3D:
     """
     Merges multiple trajectories into a single, timestamp-sorted one.
     :param trajectories: list of PoseTrajectory3D objects
