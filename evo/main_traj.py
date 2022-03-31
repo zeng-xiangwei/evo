@@ -26,6 +26,8 @@ import datetime
 import logging
 import os
 
+from natsort import natsorted
+
 from evo.tools.settings import SETTINGS
 
 logger = logging.getLogger(__name__)
@@ -234,7 +236,9 @@ def load_trajectories(args):
         bag.open()
         try:
             if args.all_topics:
-                topics = args.topics + file_interface.get_supported_topics(bag)
+                # Note: args.topics can have TF stuff here, so we add it too.
+                topics = args.topics
+                topics += natsorted(file_interface.get_supported_topics(bag))
                 if args.ref in topics:
                     topics.remove(args.ref)
                 if len(topics) == 0:
@@ -443,7 +447,7 @@ def run(args):
                       label=short_traj_name,
                       alpha=SETTINGS.plot_reference_alpha)
             plot.draw_coordinate_axes(ax_traj, ref_traj, plot_mode,
-                                      SETTINGS.plot_axis_marker_scale)
+                                      SETTINGS.plot_reference_axis_marker_scale)
             plot.traj_xyz(
                 axarr_xyz, ref_traj, style=SETTINGS.plot_reference_linestyle,
                 color=SETTINGS.plot_reference_color, label=short_traj_name,
