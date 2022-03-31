@@ -57,7 +57,18 @@ rc = {
     "font.family": SETTINGS.plot_fontfamily,
     "pgf.texsystem": SETTINGS.plot_texsystem
 }
-mpl.rcParams.update(rc)
+
+config = {
+    "font.family": 'Times New Roman', # 衬线字体
+    "font.size": 10, # 相当于小四大小
+    # "font.serif": ['SimSun'], # 宋体
+    "mathtext.fontset": 'stix', # matplotlib渲染数学字体时使用的字体，和Times New Roman差别不大
+    'axes.unicode_minus': False # 处理负号，即-号
+}
+
+mpl.rcParams.update(config)
+mpl.rcParams.update({"font.size":10})
+
 
 logger = logging.getLogger(__name__)
 
@@ -268,8 +279,8 @@ def prepare_axis(fig: plt.Figure, plot_mode: PlotMode = PlotMode.xy,
         ylabel = "$x$ (m)"
     else:
         ylabel = "$z$ (m)"
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
+    ax.set_xlabel(xlabel, fontsize=10)
+    ax.set_ylabel(ylabel, fontsize=10)
     if plot_mode == PlotMode.xyz:
         ax.set_zlabel('$z$ (m)')
     if SETTINGS.plot_invert_xaxis:
@@ -319,15 +330,36 @@ def traj(ax: plt.Axes, plot_mode: PlotMode, traj: trajectory.PosePath3D,
     x_idx, y_idx, z_idx = plot_mode_to_idx(plot_mode)
     x = traj.positions_xyz[:, x_idx]
     y = traj.positions_xyz[:, y_idx]
+    if isinstance(traj, trajectory.PoseTrajectory3D):
+        str("timestamps")
+        time = traj.timestamps - traj.timestamps[0]
+
     if plot_mode == PlotMode.xyz:
         z = traj.positions_xyz[:, z_idx]
         ax.plot(x, y, z, style, color=color, label=label, alpha=alpha)
     else:
-        ax.plot(x, y, style, color=color, label=label, alpha=alpha)
+        for i in range(len(x) - 1):
+            ax.plot(x[i:i+2], y[i:i+2], color=plt.cm.jet(int((time[i] - time[0]) * 255 / (time[-1] - time[0]))), alpha=alpha)
+        # ax.plot(x, y, style, color=color, label=label, alpha=alpha)
+        norm = mpl.colors.Normalize(vmin=time[0], vmax=time[-1], clip=True)
+        mapper = cm.ScalarMappable(
+            norm=norm,
+            cmap="jet")  # cm.*_r is reversed cmap
+        mapper.set_array(time)
+        fig = plt.gcf()
+        cbar = fig.colorbar(
+            mapper, ticks=[time[0], (time[-1] - (time[-1] - time[0]) / 2), time[-1]], fraction=0.026, pad=0.04)
+        cbar.ax.set_yticklabels([
+            "{0:0.1f}".format(time[0]),
+            "{0:0.1f}".format((time[-1] - (time[-1] - time[0]) / 2)),
+            "{0:0.1f}".format(time[-1])
+        ])
+        # cbar.ax.set_label("$ t(s) $")
+    
     if SETTINGS.plot_xyz_realistic:
         set_aspect_equal(ax)
-    if label:
-        ax.legend(frameon=True)
+    # if label:
+        # ax.legend(frameon=True, fontsize=10)
 
 
 def colored_line_collection(
@@ -398,7 +430,7 @@ def traj_colormap(ax: plt.Axes, traj: trajectory.PosePath3D,
         "{0:0.3f}".format(max_map)
     ])
     if title:
-        ax.legend(frameon=True)
+        ax.legend(frameon=True, fontsize=10)
         ax.set_title(title)
 
 
@@ -501,10 +533,12 @@ def traj_xyz(axarr: np.ndarray, traj: trajectory.PosePath3D, style: str = '-',
     for i in range(0, 3):
         axarr[i].plot(x, traj.positions_xyz[:, i], style, color=color,
                       label=label, alpha=alpha)
-        axarr[i].set_ylabel(ylabels[i])
-    axarr[2].set_xlabel(xlabel)
+        axarr[i].set_ylabel(ylabels[i], fontsize=10)
+        axarr[i].tick_params(labelsize=10) 
+    axarr[2].set_xlabel(xlabel, fontsize=10)
+    axarr[2].tick_params(labelsize=10) 
     if label:
-        axarr[0].legend(frameon=True)
+        axarr[0].legend(frameon=True, fontsize=8, loc='upper right')
 
 
 def traj_rpy(axarr: np.ndarray, traj: trajectory.PosePath3D, style: str = '-',
@@ -539,10 +573,12 @@ def traj_rpy(axarr: np.ndarray, traj: trajectory.PosePath3D, style: str = '-',
     for i in range(0, 3):
         axarr[i].plot(x, np.rad2deg(angles[:, i]), style, color=color,
                       label=label, alpha=alpha)
-        axarr[i].set_ylabel(ylabels[i])
-    axarr[2].set_xlabel(xlabel)
+        axarr[i].set_ylabel(ylabels[i], fontsize=10)
+        axarr[i].tick_params(labelsize=10) 
+    axarr[2].set_xlabel(xlabel, fontsize=10)
+    axarr[2].tick_params(labelsize=10) 
     if label:
-        axarr[0].legend(frameon=True)
+        axarr[0].legend(frameon=True, fontsize=8, loc='upper right')
 
 
 def trajectories(fig: plt.Figure, trajectories: typing.Union[
@@ -639,7 +675,7 @@ def error_array(ax: plt.Axes, err_array: ListOrArray,
     plt.ylabel(ylabel if ylabel else name)
     plt.xlabel(xlabel)
     plt.title(title)
-    plt.legend(frameon=True)
+    plt.legend(frameon=True, fontsize=10)
 
 
 def ros_map(ax: plt.Axes, yaml_path: str, plot_mode: PlotMode,
